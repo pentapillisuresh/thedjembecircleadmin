@@ -69,8 +69,7 @@ export const getOrder = (id) =>
 export const updateOrderStatus = (id, status) => 
   axiosInstance.put(`/admin/orders/${id}/status`, { status });
 
-// Gallery
-// Gallery
+// Gallery - UPDATED to use admin routes from adminController
 export const getGalleryItems = (params) => 
   axiosInstance.get('/admin/gallery', { params });
 
@@ -88,3 +87,34 @@ export const deleteGalleryItem = (id) =>
 
 export const toggleGalleryItem = (id) => 
   axiosInstance.put(`/admin/gallery/${id}/toggle`);
+
+// File Upload for Gallery - UPDATED to use admin routes
+export const uploadGalleryFile = (file, onProgress) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  return axiosInstance.post('/admin/gallery/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: (progressEvent) => {
+      if (onProgress) {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        onProgress(percentCompleted);
+      }
+    }
+  });
+};
+
+export const uploadGalleryVideo = (file, onProgress) => {
+  const formData = new FormData();
+  formData.append('video', file);
+  
+  return axiosInstance.post('/admin/gallery/upload-video', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: (progressEvent) => {
+      if (onProgress) {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        onProgress(percentCompleted);
+      }
+    }
+  });
+};

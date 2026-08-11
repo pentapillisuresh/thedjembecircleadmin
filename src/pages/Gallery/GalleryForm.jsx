@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
-import { getEvents, createGalleryItem, updateGalleryItem } from '../../api/admin';
+import { getEvents, createGalleryItem, updateGalleryItem, uploadGalleryFile, uploadGalleryVideo } from '../../api/admin';
 
 // Custom SVG Icons
 const ImageIcon = () => (
@@ -15,25 +15,27 @@ const VideoIcon = () => (
   </svg>
 );
 
-const LinkIcon = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+const UploadIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
   </svg>
 );
 
-const CalendarIcon = () => (
+const CloseIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
   </svg>
 );
 
 const GalleryForm = ({ onSuccess, onCancel, editData }) => {
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [events, setEvents] = useState([]);
+  const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     eventId: '',
     mediaType: 'image',
-    galleryType: 'event',
     mediaUrl: '',
     caption: '',
   });
@@ -46,7 +48,6 @@ const GalleryForm = ({ onSuccess, onCancel, editData }) => {
       setFormData({
         eventId: editData.eventId || '',
         mediaType: editData.mediaType || 'image',
-        galleryType: editData.galleryType || 'event',
         mediaUrl: editData.mediaUrl || '',
         caption: editData.caption || '',
       });
@@ -68,6 +69,50 @@ const GalleryForm = ({ onSuccess, onCancel, editData }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file size
+    const maxSize = formData.mediaType === 'video' ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error(`File size exceeds ${formData.mediaType === 'video' ? '100MB' : '10MB'} limit`);
+      return;
+    }
+
+    setUploading(true);
+    setUploadProgress(0);
+
+    try {
+      let response;
+      if (formData.mediaType === 'video') {
+        response = await uploadGalleryVideo(file, (progress) => {
+          setUploadProgress(progress);
+        });
+      } else {
+        response = await uploadGalleryFile(file, (progress) => {
+          setUploadProgress(progress);
+        });
+      }
+
+      if (response.data.success) {
+        setFormData(prev => ({
+          ...prev,
+          mediaUrl: response.data.data.fileUrl
+        }));
+        toast.success('File uploaded successfully');
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to upload file');
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -80,7 +125,8 @@ const GalleryForm = ({ onSuccess, onCancel, editData }) => {
     try {
       const submitData = {
         ...formData,
-        galleryType: formData.eventId ? 'event' : 'others',
+        // Convert empty eventId to null for backend
+        eventId: formData.eventId || null,
       };
 
       if (isEdit) {
@@ -90,13 +136,7 @@ const GalleryForm = ({ onSuccess, onCancel, editData }) => {
         await createGalleryItem(submitData);
         toast.success('Gallery item added successfully');
       }
-      setFormData({ 
-        eventId: '', 
-        mediaType: 'image', 
-        galleryType: 'event',
-        mediaUrl: '', 
-        caption: '' 
-      });
+      
       if (onSuccess) onSuccess();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to save gallery item');
@@ -105,20 +145,34 @@ const GalleryForm = ({ onSuccess, onCancel, editData }) => {
     }
   };
 
+  const handleRemoveFile = () => {
+    setFormData({ ...formData, mediaUrl: '' });
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-      <div className="flex items-center gap-3 mb-5">
-        <div className="p-2 bg-[#D3000D]/10 rounded-lg">
-          {formData.mediaType === 'image' ? <ImageIcon /> : <VideoIcon />}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-[#D3000D]/10 rounded-lg">
+            {formData.mediaType === 'image' ? <ImageIcon /> : <VideoIcon />}
+          </div>
+          <div>
+            <h3 className="text-base font-medium text-gray-800" style={{ fontFamily: "'Georgia', serif" }}>
+              {isEdit ? 'Edit Gallery Item' : 'Add New Gallery Item'}
+            </h3>
+            <p className="text-xs text-gray-400">
+              {isEdit ? 'Update your gallery item' : 'Add a new image or video to the gallery'}
+            </p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-base font-medium text-gray-800" style={{ fontFamily: "'Georgia', serif" }}>
-            {isEdit ? 'Edit Gallery Item' : 'Add New Gallery Item'}
-          </h3>
-          <p className="text-xs text-gray-400">
-            {isEdit ? 'Update your gallery item' : 'Add a new image or video to the gallery'}
-          </p>
-        </div>
+        {onCancel && (
+          <button
+            onClick={onCancel}
+            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <CloseIcon />
+          </button>
+        )}
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -138,11 +192,6 @@ const GalleryForm = ({ onSuccess, onCancel, editData }) => {
                 <option value="image">📷 Image</option>
                 <option value="video">🎬 Video</option>
               </select>
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
             </div>
           </div>
           <div>
@@ -163,37 +212,65 @@ const GalleryForm = ({ onSuccess, onCancel, editData }) => {
                   </option>
                 ))}
               </select>
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <CalendarIcon />
-              </div>
-            </div>
-            <div className="mt-1.5 flex items-center gap-2">
-              <span className={`w-1.5 h-1.5 rounded-full ${formData.eventId ? 'bg-[#D3000D]' : 'bg-gray-300'}`}></span>
-              <p className="text-xs text-gray-400">
-                {formData.eventId ? 'This will be an event gallery item' : 'This will be a general gallery item'}
-              </p>
             </div>
           </div>
         </div>
 
         <div>
           <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5">
-            Media URL *
+            {formData.mediaType === 'video' ? 'Upload Video' : 'Upload Image'}
           </label>
-          <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 focus-within:ring-2 focus-within:ring-[#D3000D] focus-within:border-transparent transition-all duration-200">
-            <LinkIcon />
-            <input
-              type="url"
-              name="mediaUrl"
-              value={formData.mediaUrl}
-              onChange={handleChange}
-              placeholder="https://example.com/image.jpg"
-              className="flex-1 bg-transparent border-none focus:outline-none text-sm text-gray-600 placeholder-gray-400"
-              required
-            />
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-300 rounded-xl hover:border-[#D3000D] hover:bg-[#D3000D]/5 transition-all duration-200 text-sm text-gray-600 hover:text-[#D3000D] disabled:opacity-50"
+              >
+                <UploadIcon />
+                {uploading ? 'Uploading...' : 'Choose File'}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={formData.mediaType === 'video' ? 'video/*' : 'image/*'}
+                onChange={handleFileUpload}
+                className="hidden"
+                disabled={uploading}
+              />
+              {formData.mediaUrl && (
+                <span className="text-sm text-green-600">✓ File uploaded</span>
+              )}
+            </div>
+            {uploading && (
+              <div className="w-full">
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-[#D3000D] h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-gray-400 mt-1">{uploadProgress}% uploaded</p>
+              </div>
+            )}
+            {formData.mediaUrl && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 truncate max-w-[300px]">
+                  {formData.mediaUrl}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleRemoveFile}
+                  className="text-xs text-red-500 hover:text-red-600"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
           </div>
           <p className="text-xs text-gray-400 mt-1.5">
-            Enter the URL of the image or video file
+            {formData.mediaType === 'video' ? 'Maximum file size: 100MB' : 'Maximum file size: 10MB'}
           </p>
         </div>
 
@@ -214,7 +291,7 @@ const GalleryForm = ({ onSuccess, onCancel, editData }) => {
         <div className="flex items-center gap-3 pt-2">
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || uploading}
             className="px-6 py-2.5 bg-[#D3000D] text-white rounded-xl hover:bg-[#B0000A] transition-all duration-300 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
           >
             {loading ? (
@@ -226,15 +303,6 @@ const GalleryForm = ({ onSuccess, onCancel, editData }) => {
               isEdit ? 'Update Item' : 'Add Item'
             )}
           </button>
-          {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="px-6 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors text-sm font-medium"
-            >
-              Cancel
-            </button>
-          )}
         </div>
       </form>
     </div>

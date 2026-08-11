@@ -74,13 +74,16 @@ const OrdersList = () => {
 
       const response = await getOrders(params);
       if (response.data.success) {
-        setOrders(response.data.data.orders || []);
+        // Ensure we're getting the orders array properly
+        const ordersData = response.data.data.orders || response.data.data || [];
+        setOrders(ordersData);
         setPagination({
           ...pagination,
-          total: response.data.data.total || 0,
+          total: response.data.data.total || ordersData.length || 0,
         });
       }
     } catch (error) {
+      console.error('Fetch orders error:', error);
       toast.error('Failed to load orders');
     } finally {
       setLoading(false);
@@ -239,76 +242,85 @@ const OrdersList = () => {
               </tr>
             </thead>
             <tbody>
-              {orders.map((order) => (
-                <tr 
-                  key={order.id} 
-                  className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors duration-200 group"
-                >
-                  <td className="py-4 px-6">
-                    <span className="font-mono text-sm font-medium text-gray-800">#{order.id}</span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">{order.user?.name || 'N/A'}</p>
-                      <p className="text-xs text-gray-400">{order.user?.phone || ''}</p>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="text-sm text-gray-600 line-clamp-1 max-w-[150px]">
-                      {order.event?.title || 'N/A'}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 text-right">
-                    <span className="text-sm font-semibold text-gray-900">
-                      ₹{order.totalAmount?.toFixed(2)}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-2">
-                      {getPaymentStatusIcon(order)}
+              {orders.map((order) => {
+                // Safely access user data - FIXED
+                const user = order.User || order.user || {};
+                const userName = user.name || 'N/A';
+                const userPhone = user.phone || '';
+                const event = order.event || {};
+                const eventTitle = event.title || 'N/A';
+                
+                return (
+                  <tr 
+                    key={order.id} 
+                    className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors duration-200 group"
+                  >
+                    <td className="py-4 px-6">
+                      <span className="font-mono text-sm font-medium text-gray-800">#{order.id}</span>
+                    </td>
+                    <td className="py-4 px-6">
                       <div>
-                        {order.razorpayPaymentId ? (
-                          <span className="text-xs font-medium text-green-600">Paid</span>
-                        ) : order.razorpayOrderId ? (
-                          <span className="text-xs font-medium text-yellow-600">Initiated</span>
-                        ) : (
-                          <span className="text-xs text-gray-400">Not Initiated</span>
-                        )}
-                        {order.razorpayPaymentId && (
-                          <div className="text-xs text-gray-400 font-mono truncate max-w-[80px]">
-                            {order.razorpayPaymentId.slice(0, 10)}...
-                          </div>
-                        )}
+                        <p className="text-sm font-medium text-gray-800">{userName}</p>
+                        {userPhone && <p className="text-xs text-gray-400">{userPhone}</p>}
                       </div>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getStatusColor(order.status)}`}>
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="text-sm text-gray-500">
-                      {new Date(order.createdAt).toLocaleDateString('en-IN', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric'
-                      })}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center justify-end">
-                      <button
-                        onClick={() => navigate(`/orders/${order.id}`)}
-                        className="p-2 text-gray-400 hover:text-[#D3000D] hover:bg-[#D3000D]/5 rounded-lg transition-all duration-200"
-                        title="View Details"
-                      >
-                        <EyeIcon />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="text-sm text-gray-600 line-clamp-1 max-w-[150px]">
+                        {eventTitle}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      <span className="text-sm font-semibold text-gray-900">
+                        ₹{order.totalAmount?.toFixed(2) || '0.00'}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-2">
+                        {getPaymentStatusIcon(order)}
+                        <div>
+                          {order.razorpayPaymentId ? (
+                            <span className="text-xs font-medium text-green-600">Paid</span>
+                          ) : order.razorpayOrderId ? (
+                            <span className="text-xs font-medium text-yellow-600">Initiated</span>
+                          ) : (
+                            <span className="text-xs text-gray-400">Not Initiated</span>
+                          )}
+                          {order.razorpayPaymentId && (
+                            <div className="text-xs text-gray-400 font-mono truncate max-w-[80px]">
+                              {order.razorpayPaymentId.slice(0, 10)}...
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className={`px-3 py-1 text-xs font-medium rounded-full border ${getStatusColor(order.status)}`}>
+                        {order.status || 'pending'}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="text-sm text-gray-500">
+                        {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        }) : 'N/A'}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center justify-end">
+                        <button
+                          onClick={() => navigate(`/orders/${order.id}`)}
+                          className="p-2 text-gray-400 hover:text-[#D3000D] hover:bg-[#D3000D]/5 rounded-lg transition-all duration-200"
+                          title="View Details"
+                        >
+                          <EyeIcon />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

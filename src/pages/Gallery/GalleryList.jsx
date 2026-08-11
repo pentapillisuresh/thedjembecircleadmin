@@ -69,10 +69,15 @@ const GalleryList = () => {
     try {
       const response = await getGalleryItems();
       if (response.data.success) {
-        setItems(response.data.data || []);
+        // Handle the response structure from adminController
+        const itemsData = response.data.data || [];
+        setItems(itemsData);
+      } else {
+        toast.error(response.data.message || 'Failed to load gallery items');
       }
     } catch (error) {
-      toast.error('Failed to load gallery items');
+      console.error('Fetch gallery error:', error);
+      toast.error(error.response?.data?.message || 'Failed to load gallery items');
     } finally {
       setLoading(false);
     }
@@ -83,20 +88,22 @@ const GalleryList = () => {
     
     try {
       await deleteGalleryItem(id);
-      toast.success('Gallery item deleted');
+      toast.success('Gallery item deleted successfully');
       fetchItems();
     } catch (error) {
-      toast.error('Failed to delete item');
+      console.error('Delete error:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete item');
     }
   };
 
   const handleToggle = async (id) => {
     try {
       await toggleGalleryItem(id);
-      toast.success('Status toggled');
+      toast.success('Status toggled successfully');
       fetchItems();
     } catch (error) {
-      toast.error('Failed to toggle status');
+      console.error('Toggle error:', error);
+      toast.error(error.response?.data?.message || 'Failed to toggle status');
     }
   };
 

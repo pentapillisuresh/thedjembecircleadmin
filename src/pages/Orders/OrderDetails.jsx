@@ -94,8 +94,11 @@ const OrderDetails = () => {
       const response = await getOrder(id);
       if (response.data.success) {
         setOrder(response.data.data);
+      } else {
+        toast.error(response.data.message || 'Failed to load order');
       }
     } catch (error) {
+      console.error('Fetch order error:', error);
       toast.error('Failed to load order');
     } finally {
       setLoading(false);
@@ -161,6 +164,10 @@ const OrderDetails = () => {
   if (loading) return <LoadingSpinner />;
   if (!order) return <div className="p-6 text-center text-gray-500">Order not found</div>;
 
+  // Safely access user data - FIXED
+  const user = order.User || order.user || {};
+  const event = order.event || {};
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="max-w-6xl mx-auto">
@@ -176,7 +183,7 @@ const OrderDetails = () => {
           <div className="flex items-center gap-3">
             <span className={`px-4 py-1.5 text-sm font-medium rounded-full border flex items-center gap-2 ${getStatusColor(order.status)}`}>
               {getStatusIcon(order.status)}
-              <span className="capitalize">{order.status}</span>
+              <span className="capitalize">{order.status || 'pending'}</span>
             </span>
             {order.status === 'pending' && (
               <button
@@ -216,13 +223,13 @@ const OrderDetails = () => {
                 Order #{order.id}
               </h1>
               <p className="text-sm text-gray-400 mt-1">
-                {new Date(order.createdAt).toLocaleString()}
+                {order.createdAt ? new Date(order.createdAt).toLocaleString() : 'N/A'}
               </p>
             </div>
             <div className="text-right">
               <p className="text-xs text-gray-400 uppercase tracking-wider">Total Amount</p>
               <p className="text-2xl font-light text-[#D3000D]" style={{ fontFamily: "'Georgia', serif" }}>
-                ₹{order.totalAmount?.toFixed(2)}
+                ₹{order.totalAmount?.toFixed(2) || '0.00'}
               </p>
             </div>
           </div>
@@ -242,7 +249,7 @@ const OrderDetails = () => {
               ) : (
                 <CreditCardIcon />
               )}
-              <span className="text-sm font-medium capitalize text-gray-700">{order.status}</span>
+              <span className="text-sm font-medium capitalize text-gray-700">{order.status || 'pending'}</span>
             </div>
           </div>
           
@@ -258,11 +265,11 @@ const OrderDetails = () => {
             <p className="text-xs text-gray-400 uppercase tracking-wider">Order Date</p>
             <div className="mt-1">
               <span className="text-sm text-gray-700">
-                {new Date(order.createdAt).toLocaleDateString('en-IN', {
+                {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', {
                   day: '2-digit',
                   month: 'long',
                   year: 'numeric'
-                })}
+                }) : 'N/A'}
               </span>
             </div>
           </div>
@@ -322,12 +329,18 @@ const OrderDetails = () => {
             <div className="space-y-3">
               <div className="flex items-center text-sm text-gray-600">
                 <span className="w-20 text-gray-400">Name</span>
-                <span className="font-medium text-gray-800">{order.user?.name || 'N/A'}</span>
+                <span className="font-medium text-gray-800">{user.name || 'N/A'}</span>
               </div>
               <div className="flex items-center text-sm text-gray-600">
                 <span className="w-20 text-gray-400">Phone</span>
-                <span className="font-medium text-gray-800">{order.user?.phone || 'N/A'}</span>
+                <span className="font-medium text-gray-800">{user.phone || 'N/A'}</span>
               </div>
+              {user.email && (
+                <div className="flex items-center text-sm text-gray-600">
+                  <span className="w-20 text-gray-400">Email</span>
+                  <span className="font-medium text-gray-800">{user.email}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -339,18 +352,24 @@ const OrderDetails = () => {
             <div className="space-y-3">
               <div className="flex items-center text-sm text-gray-600">
                 <span className="w-20 text-gray-400">Event</span>
-                <span className="font-medium text-gray-800">{order.event?.title || 'N/A'}</span>
+                <span className="font-medium text-gray-800">{event.title || 'N/A'}</span>
               </div>
               <div className="flex items-center text-sm text-gray-600">
                 <span className="w-20 text-gray-400">Date</span>
                 <span className="font-medium text-gray-800">
-                  {order.event?.date ? new Date(order.event.date).toLocaleDateString('en-IN', {
+                  {event.date ? new Date(event.date).toLocaleDateString('en-IN', {
                     day: '2-digit',
                     month: 'long',
                     year: 'numeric'
                   }) : 'N/A'}
                 </span>
               </div>
+              {event.venue && (
+                <div className="flex items-center text-sm text-gray-600">
+                  <span className="w-20 text-gray-400">Venue</span>
+                  <span className="font-medium text-gray-800">{event.venue}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -372,17 +391,23 @@ const OrderDetails = () => {
                 </tr>
               </thead>
               <tbody>
-                {order.items?.map((item) => (
-                  <tr key={item.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                    <td className="py-3 px-6">
-                      <span className="text-sm font-medium text-gray-700">{item.ticketClass?.name || 'N/A'}</span>
-                    </td>
-                    <td className="py-3 px-6 text-right text-sm text-gray-600">{item.quantity}</td>
-                    <td className="py-3 px-6 text-right text-sm text-gray-600">₹{item.priceAtTime?.toFixed(2)}</td>
-                    <td className="py-3 px-6 text-right text-sm text-gray-600">{item.discountPercentageAtTime || 0}%</td>
-                    <td className="py-3 px-6 text-right text-sm font-medium text-gray-800">₹{item.subtotal?.toFixed(2)}</td>
+                {order.items && order.items.length > 0 ? (
+                  order.items.map((item) => (
+                    <tr key={item.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                      <td className="py-3 px-6">
+                        <span className="text-sm font-medium text-gray-700">{item.ticketClass?.name || 'N/A'}</span>
+                      </td>
+                      <td className="py-3 px-6 text-right text-sm text-gray-600">{item.quantity || 0}</td>
+                      <td className="py-3 px-6 text-right text-sm text-gray-600">₹{item.priceAtTime?.toFixed(2) || '0.00'}</td>
+                      <td className="py-3 px-6 text-right text-sm text-gray-600">{item.discountPercentageAtTime || 0}%</td>
+                      <td className="py-3 px-6 text-right text-sm font-medium text-gray-800">₹{item.subtotal?.toFixed(2) || '0.00'}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="py-6 text-center text-gray-400 text-sm">No items found</td>
                   </tr>
-                ))}
+                )}
               </tbody>
               <tfoot>
                 <tr className="border-t border-gray-200 bg-gray-50/50">
@@ -391,7 +416,7 @@ const OrderDetails = () => {
                   </td>
                   <td className="py-4 px-6 text-right">
                     <span className="text-lg font-light text-[#D3000D]" style={{ fontFamily: "'Georgia', serif" }}>
-                      ₹{order.totalAmount?.toFixed(2)}
+                      ₹{order.totalAmount?.toFixed(2) || '0.00'}
                     </span>
                   </td>
                 </tr>
