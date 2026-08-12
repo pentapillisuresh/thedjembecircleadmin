@@ -9,11 +9,12 @@ import EventsList from './pages/Events/EventsList';
 import EventForm from './pages/Events/EventForm';
 import EventDetails from './pages/Events/EventDetails';
 import UsersList from './pages/Users/UsersList';
-import UserDetails from './pages/Users/UserDetails'; // Add this import
+import UserDetails from './pages/Users/UserDetails';
 import OrdersList from './pages/Orders/OrdersList';
 import OrderDetails from './pages/Orders/OrderDetails';
 import GalleryList from './pages/Gallery/GalleryList';
 import Profile from './pages/Profile';
+import Coupons from './pages/Coupons'; // Add this import
 
 const AppLayout = ({ children }) => (
   <div className="flex h-screen overflow-hidden">
@@ -81,7 +82,6 @@ function App() {
           </ProtectedRoute>
         } />
         
-        {/* Add UserDetails route */}
         <Route path="/users/:id" element={
           <ProtectedRoute>
             <AppLayout>
@@ -110,6 +110,15 @@ function App() {
           <ProtectedRoute>
             <AppLayout>
               <GalleryList />
+            </AppLayout>
+          </ProtectedRoute>
+        } />
+        
+        {/* Add Coupons routes */}
+        <Route path="/coupons" element={
+          <ProtectedRoute>
+            <AppLayout>
+              <Coupons />
             </AppLayout>
           </ProtectedRoute>
         } />

@@ -104,6 +104,11 @@ export const uploadGalleryFile = (file, onProgress) => {
   });
 };
 
+
+
+
+
+
 export const uploadGalleryVideo = (file, onProgress) => {
   const formData = new FormData();
   formData.append('video', file);
@@ -118,3 +123,35 @@ export const uploadGalleryVideo = (file, onProgress) => {
     }
   });
 };
+
+// ===================== SIMPLIFIED COUPONS CRUD OPERATIONS =====================
+
+// Get all coupons with optional filtering
+export const getCoupons = (params) => 
+  axiosInstance.get('/admin/coupons', { params });
+
+// Get a single coupon by ID
+export const getCoupon = (id) => 
+  axiosInstance.get(`/admin/coupons/${id}`);
+
+// Create a new coupon
+export const createCoupon = (data) => 
+  axiosInstance.post('/admin/coupons', data);
+
+// Update an existing coupon
+export const updateCoupon = (id, data) => 
+  axiosInstance.put(`/admin/coupons/${id}`, data);
+
+// Delete a coupon
+export const deleteCoupon = (id) => 
+  axiosInstance.delete(`/admin/coupons/${id}`);
+
+// Toggle coupon status (active/inactive)
+export const toggleCouponStatus = (id) => 
+  axiosInstance.put(`/admin/coupons/${id}/toggle`);
+
+// Validate a coupon code (for frontend validation before applying)
+export const validateCoupon = (code, eventId) => 
+  axiosInstance.post('/admin/coupons/validate', { code, eventId });
+
+// ===================== END COUPONS CRUD =====================
