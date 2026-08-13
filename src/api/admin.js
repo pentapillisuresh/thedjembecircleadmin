@@ -124,34 +124,65 @@ export const uploadGalleryVideo = (file, onProgress) => {
   });
 };
 
-// ===================== SIMPLIFIED COUPONS CRUD OPERATIONS =====================
+// src/api/admin.js
+
+
+
+// ===================== COUPONS CRUD OPERATIONS =====================
 
 // Get all coupons with optional filtering
-export const getCoupons = (params) => 
-  axiosInstance.get('/admin/coupons', { params });
+export const getCoupons = async (params) => {
+  try {
+    const response = await axiosInstance.get('/admin/coupons', { params });
+    // Response formatter wraps data in { success, data, message }
+    // The actual coupons array is in response.data.data
+    return response.data?.data || [];
+  } catch (error) {
+    console.error('Error fetching coupons:', error);
+    throw error;
+  }
+};
 
 // Get a single coupon by ID
-export const getCoupon = (id) => 
-  axiosInstance.get(`/admin/coupons/${id}`);
+export const getCoupon = async (id) => {
+  const response = await axiosInstance.get(`/admin/coupons/${id}`);
+  return response.data?.data || null;
+};
 
 // Create a new coupon
-export const createCoupon = (data) => 
-  axiosInstance.post('/admin/coupons', data);
+export const createCoupon = async (data) => {
+  const response = await axiosInstance.post('/admin/coupons', data);
+  return response.data?.data || null;
+};
 
 // Update an existing coupon
-export const updateCoupon = (id, data) => 
-  axiosInstance.put(`/admin/coupons/${id}`, data);
+export const updateCoupon = async (id, data) => {
+  const response = await axiosInstance.put(`/admin/coupons/${id}`, data);
+  return response.data?.data || null;
+};
 
 // Delete a coupon
-export const deleteCoupon = (id) => 
-  axiosInstance.delete(`/admin/coupons/${id}`);
+export const deleteCoupon = async (id) => {
+  const response = await axiosInstance.delete(`/admin/coupons/${id}`);
+  return response.data;
+};
 
 // Toggle coupon status (active/inactive)
-export const toggleCouponStatus = (id) => 
-  axiosInstance.put(`/admin/coupons/${id}/toggle`);
+export const toggleCouponStatus = async (id) => {
+  const response = await axiosInstance.put(`/admin/coupons/${id}/toggle`);
+  return response.data?.data || null;
+};
 
 // Validate a coupon code (for frontend validation before applying)
-export const validateCoupon = (code, eventId) => 
-  axiosInstance.post('/admin/coupons/validate', { code, eventId });
+export const validateCoupon = async (code, eventId) => {
+  const response = await axiosInstance.post('/coupons/validate', { code, eventId });
+  return response.data?.data || null;
+};
+
+// Apply coupon to order
+export const applyCoupon = async (code, orderId) => {
+  const response = await axiosInstance.post('/coupons/apply', { code, orderId });
+  return response.data?.data || null;
+};
 
 // ===================== END COUPONS CRUD =====================

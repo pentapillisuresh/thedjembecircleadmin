@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { getCoupons, deleteCoupon, toggleCouponStatus } from '../../api/admin';
 
-const CouponList = ({ onEdit }) => {
+const CouponList = ({ onEdit, refreshTrigger }) => {
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -11,18 +11,22 @@ const CouponList = ({ onEdit }) => {
 
   useEffect(() => {
     fetchCoupons();
-  }, []);
+  }, [refreshTrigger]);
 
   const fetchCoupons = async () => {
     setLoading(true);
+    setError('');
     try {
       const params = {};
-      if (searchTerm) params.search = searchTerm;
+      if (searchTerm.trim()) params.search = searchTerm.trim();
       
-      const response = await getCoupons(params);
-      setCoupons(response.data);
+      const data = await getCoupons(params);
+      // Ensure data is always an array
+      setCoupons(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError('Failed to fetch coupons');
+      console.error('Fetch coupons error:', err);
+      setError(err.response?.data?.message || 'Failed to fetch coupons');
+      setCoupons([]);
     } finally {
       setLoading(false);
     }
@@ -32,9 +36,9 @@ const CouponList = ({ onEdit }) => {
     if (window.confirm('Are you sure you want to delete this coupon?')) {
       try {
         await deleteCoupon(id);
-        fetchCoupons();
+        await fetchCoupons();
       } catch (err) {
-        alert('Failed to delete coupon');
+        alert(err.response?.data?.message || 'Failed to delete coupon');
       }
     }
   };
@@ -42,9 +46,9 @@ const CouponList = ({ onEdit }) => {
   const handleToggleStatus = async (id) => {
     try {
       await toggleCouponStatus(id);
-      fetchCoupons();
+      await fetchCoupons();
     } catch (err) {
-      alert('Failed to toggle coupon status');
+      alert(err.response?.data?.message || 'Failed to toggle coupon status');
     }
   };
 
@@ -57,11 +61,19 @@ const CouponList = ({ onEdit }) => {
     fetchCoupons();
   };
 
+  const handleClearSearch = () => {
+    setSearchTerm('');
+    // Fetch after state update
+    setTimeout(() => fetchCoupons(), 0);
+  };
+
   const isExpired = (expiresAt) => {
+    if (!expiresAt) return false;
     return new Date(expiresAt) < new Date();
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -80,6 +92,7 @@ const CouponList = ({ onEdit }) => {
   };
 
   const getDaysRemaining = (expiresAt) => {
+    if (!expiresAt) return null;
     const now = new Date();
     const expiry = new Date(expiresAt);
     const diffTime = expiry - now;
@@ -118,10 +131,7 @@ const CouponList = ({ onEdit }) => {
           {searchTerm && (
             <button
               type="button"
-              onClick={() => {
-                setSearchTerm('');
-                fetchCoupons();
-              }}
+              onClick={handleClearSearch}
               className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               Clear
@@ -143,6 +153,7 @@ const CouponList = ({ onEdit }) => {
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Used</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expires</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -151,7 +162,7 @@ const CouponList = ({ onEdit }) => {
           <tbody className="divide-y divide-gray-200">
             {coupons.length === 0 ? (
               <tr>
-                <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
+                <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
                   No coupons found
                 </td>
               </tr>
@@ -166,11 +177,22 @@ const CouponList = ({ onEdit }) => {
                     <span className="text-xs text-gray-500 block">off</span>
                   </td>
                   <td className="px-6 py-4">
+                    <div className="text-sm">
+                      {coupon.usedCount || 0}
+                      {coupon.maxUses !== null && coupon.maxUses !== undefined && (
+                        <span className="text-xs text-gray-500 block">/ {coupon.maxUses} max</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
                     <div className="text-sm">{formatDate(coupon.expiresAt)}</div>
-                    {!isExpired(coupon.expiresAt) && coupon.isActive && (
+                    {!isExpired(coupon.expiresAt) && coupon.isActive && coupon.expiresAt && (
                       <div className="text-xs text-gray-500">
                         {getDaysRemaining(coupon.expiresAt)} days remaining
                       </div>
+                    )}
+                    {isExpired(coupon.expiresAt) && coupon.expiresAt && (
+                      <div className="text-xs text-red-500">Expired</div>
                     )}
                   </td>
                   <td className="px-6 py-4">

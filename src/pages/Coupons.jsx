@@ -7,6 +7,7 @@ import CouponForm from '../components/coupons/CouponForm';
 const Coupons = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handleEdit = (coupon) => {
     setEditingCoupon(coupon);
@@ -16,7 +17,8 @@ const Coupons = () => {
   const handleFormSuccess = () => {
     setShowForm(false);
     setEditingCoupon(null);
-    // Refresh the list will be handled by the CouponList component internally
+    // Refresh the list by changing the trigger
+    setRefreshTrigger(prev => prev + 1);
   };
 
   const handleFormCancel = () => {
@@ -28,11 +30,14 @@ const Coupons = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-light">Coupons</h1>
+          <h1 className="text-3xl font-light text-gray-800">Coupons</h1>
           <p className="text-gray-400 mt-1">Manage discount coupons for events</p>
         </div>
         <button
-          onClick={() => setShowForm(true)}
+          onClick={() => {
+            setEditingCoupon(null);
+            setShowForm(true);
+          }}
           className="px-4 py-2 bg-[#D3000D] text-white rounded-lg hover:bg-[#B3000B] transition-colors flex items-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -56,7 +61,7 @@ const Coupons = () => {
           />
         </div>
       ) : (
-        <CouponList onEdit={handleEdit} />
+        <CouponList onEdit={handleEdit} refreshTrigger={refreshTrigger} />
       )}
     </div>
   );
