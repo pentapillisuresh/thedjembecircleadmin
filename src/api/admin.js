@@ -1,8 +1,27 @@
 import axiosInstance from './axios';
 
 // Auth APIs
-export const adminLogin = (phone, pin) => 
-  axiosInstance.post('/auth/admin/login', { phone, pin });
+export const adminLogin = async (phone, pin) => {
+  const response = await axiosInstance.post('/auth/admin/login', {
+    phone,
+    pin
+  });
+
+  const data = response.data?.data;
+
+  if (data?.token) {
+    sessionStorage.setItem('adminToken', data.token);
+  }
+
+  if (data?.admin) {
+    sessionStorage.setItem(
+      'adminData',
+      JSON.stringify(data.admin)
+    );
+  }
+
+  return response;
+};
 
 export const adminResetPin = (phone, newPin) => 
   axiosInstance.post('/auth/admin/reset-pin', { phone, newPin });
