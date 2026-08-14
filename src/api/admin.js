@@ -205,3 +205,50 @@ export const applyCoupon = async (code, orderId) => {
 };
 
 // ===================== END COUPONS CRUD =====================
+
+
+// ==================== LEADS ====================
+
+// Get all leads with optional filtering
+export const getLeads = async (params) => {
+  try {
+    const response = await axiosInstance.get('/admin/leads', { params });
+    return response.data?.data || [];
+  } catch (error) {
+    console.error('Error fetching leads:', error);
+    throw error;
+  }
+};
+
+// Get a single lead by ID
+export const getLead = async (id) => {
+  try {
+    const response = await axiosInstance.get(`/admin/leads/${id}`);
+    return response.data?.data || null;
+  } catch (error) {
+    console.error('Error fetching lead:', error);
+    throw error;
+  }
+};
+
+// Update lead status and notes
+export const updateLead = async (id, data) => {
+  try {
+    const response = await axiosInstance.put(`/admin/leads/${id}`, data);
+    return response.data?.data || null;
+  } catch (error) {
+    console.error('Error updating lead:', error);
+    throw error;
+  }
+};
+
+// Delete a lead
+export const deleteLead = async (id) => {
+  try {
+    const response = await axiosInstance.delete(`/admin/leads/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting lead:', error);
+    throw error;
+  }
+};

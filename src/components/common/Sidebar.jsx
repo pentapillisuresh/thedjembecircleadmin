@@ -41,10 +41,9 @@ const ProfileIcon = ({ active }) => (
 
 const LogoutIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 16l4-4m0 0l-4 4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 16l4-4m0 0l-4 4m4-4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
   </svg>
 );
-
 
 const CouponsIcon = ({ active }) => (
   <svg className={`w-5 h-5 ${active ? 'text-[#D3000D]' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,13 +51,9 @@ const CouponsIcon = ({ active }) => (
   </svg>
 );
 
-const LogoIcon = () => (
-  <svg className="w-10 h-10" viewBox="0 0 100 100" fill="none">
-    <circle cx="50" cy="50" r="46" stroke="#D3000D" strokeWidth="2.5"/>
-    <circle cx="50" cy="50" r="34" stroke="#D3000D" strokeWidth="1.5" opacity="0.4"/>
-    <circle cx="50" cy="50" r="22" stroke="#D3000D" strokeWidth="2" opacity="0.6"/>
-    <circle cx="50" cy="50" r="8" fill="#D3000D"/>
-    <path d="M50 20 L50 80 M20 50 L80 50" stroke="#D3000D" strokeWidth="1.5" opacity="0.15"/>
+const LeadsIcon = ({ active }) => (
+  <svg className={`w-5 h-5 ${active ? 'text-[#D3000D]' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
   </svg>
 );
 
@@ -84,8 +79,9 @@ const Sidebar = () => {
     { path: '/events', icon: EventsIcon, label: 'Events' },
     { path: '/users', icon: UsersIcon, label: 'Users' },
     { path: '/orders', icon: OrdersIcon, label: 'Orders' },
+    { path: '/leads', icon: LeadsIcon, label: 'Leads' },
     { path: '/gallery', icon: GalleryIcon, label: 'Gallery' },
-     { path: '/coupons', icon: CouponsIcon, label: 'Coupons' },
+    { path: '/coupons', icon: CouponsIcon, label: 'Coupons' },
     { path: '/profile', icon: ProfileIcon, label: 'Profile' },
   ];
 
@@ -107,11 +103,28 @@ const Sidebar = () => {
       {/* Brand Section */}
       <div className={`p-5 border-b border-white/5 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
         <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
-          <LogoIcon />
+          {/* Logo Image */}
+          <div className="flex-shrink-0">
+            <img 
+              src="/images/logo.jpeg" 
+              alt="The Djembecircle" 
+              className="w-10 h-10 object-contain"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                const parent = e.target.parentElement;
+                if (parent) {
+                  const fallback = document.createElement('div');
+                  fallback.className = 'w-10 h-10 bg-[#D3000D]/20 border-2 border-[#D3000D]/30 flex items-center justify-center text-lg font-bold text-[#D3000D]';
+                  fallback.textContent = 'D';
+                  parent.appendChild(fallback);
+                }
+              }}
+            />
+          </div>
           {!isCollapsed && (
             <div>
               <h1 className="text-lg font-light tracking-tight text-white" style={{ fontFamily: "'Georgia', serif" }}>
-                The Djembe
+                The Djembecircle
               </h1>
               <p className="text-[9px] text-gray-500 tracking-[0.2em] uppercase">Admin Panel</p>
             </div>
@@ -119,7 +132,7 @@ const Sidebar = () => {
         </div>
         <button
           onClick={toggleCollapse}
-          className={`p-1.5 rounded-lg hover:bg-white/5 transition-colors text-gray-500 hover:text-[#D3000D] ${
+          className={`p-1.5 hover:bg-white/5 transition-colors text-gray-500 hover:text-[#D3000D] ${
             isCollapsed ? 'hidden' : ''
           }`}
         >
@@ -131,7 +144,7 @@ const Sidebar = () => {
       {isCollapsed && (
         <button
           onClick={toggleCollapse}
-          className="absolute -right-3 top-20 p-1.5 bg-black border border-white/10 rounded-full shadow-lg hover:shadow-xl transition-all hover:border-[#D3000D]/30 group"
+          className="absolute -right-3 top-20 p-1.5 bg-black border border-white/10 shadow-lg hover:shadow-xl transition-all hover:border-[#D3000D]/30 group"
         >
           <ChevronRightIcon />
         </button>
@@ -144,7 +157,7 @@ const Sidebar = () => {
             key={item.path}
             to={item.path}
             className={({ isActive }) => {
-              const baseClasses = `flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 group relative ${
+              const baseClasses = `flex items-center px-3 py-2.5 transition-all duration-200 group relative ${
                 isActive 
                   ? 'bg-[#D3000D]/20 text-white shadow-lg shadow-[#D3000D]/5' 
                   : 'text-gray-400 hover:bg-white/5 hover:text-white'
@@ -163,15 +176,15 @@ const Sidebar = () => {
                   </span>
                 )}
                 {isCollapsed && (
-                  <div className="absolute left-full ml-4 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap pointer-events-none border border-white/5 shadow-lg">
+                  <div className="absolute left-full ml-4 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap pointer-events-none border border-white/5 shadow-lg">
                     {item.label}
                   </div>
                 )}
                 {isActive && !isCollapsed && (
-                  <div className="ml-auto w-1.5 h-6 rounded-full bg-[#D3000D]"></div>
+                  <div className="ml-auto w-1.5 h-6 bg-[#D3000D]"></div>
                 )}
                 {isActive && isCollapsed && (
-                  <div className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full bg-[#D3000D]"></div>
+                  <div className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#D3000D]"></div>
                 )}
               </>
             )}
@@ -183,16 +196,16 @@ const Sidebar = () => {
       <div className={`p-4 border-t border-white/5 ${isCollapsed ? 'flex justify-center' : ''}`}>
         <button
           onClick={handleLogout}
-          className={`flex items-center px-3 py-2.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all duration-200 group relative ${
+          className={`flex items-center px-3 py-2.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-200 group relative ${
             isCollapsed ? 'justify-center w-full' : 'w-full'
           }`}
-        >
+        >f
           <LogoutIcon />
           {!isCollapsed && (
             <span className="ml-3 text-sm font-medium">Sign Out</span>
           )}
           {isCollapsed && (
-            <div className="absolute left-full ml-4 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap pointer-events-none border border-white/5 shadow-lg">
+            <div className="absolute left-full ml-4 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap pointer-events-none border border-white/5 shadow-lg">
               Sign Out
             </div>
           )}

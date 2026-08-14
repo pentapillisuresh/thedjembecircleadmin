@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { getEvent, createEvent, updateEvent } from '../../api/admin';
+import { getEvent, createEvent, updateEvent, uploadGalleryFile } from '../../api/admin';
 
 // Custom SVG Icons
 const PlusIcon = () => (
@@ -16,9 +16,9 @@ const TrashIcon = () => (
   </svg>
 );
 
-const LinkIcon = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+const UploadIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
   </svg>
 );
 
@@ -27,6 +27,7 @@ const EventForm = () => {
   const { id } = useParams();
   const isEdit = !!id;
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -88,11 +89,49 @@ const EventForm = () => {
     setFormData({ ...formData, ticketClasses: updated });
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image size should be less than 10MB');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const response = await uploadGalleryFile(file, (progress) => {
+        // You can show progress if needed
+        console.log('Upload progress:', progress);
+      });
+
+      if (response.data.success) {
+        const imageUrl = response.data.data.fileUrl;
+        setFormData({ ...formData, bannerImage: imageUrl });
+        toast.success('Image uploaded successfully');
+      } else {
+        toast.error('Failed to upload image');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error(error.response?.data?.message || 'Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!formData.title || !formData.date || !formData.bannerImage) {
-      toast.error('Please fill in all required fields');
+      toast.error('Please fill in all required fields including banner image');
       return;
     }
 
@@ -244,9 +283,9 @@ const EventForm = () => {
                 </div>
               </div>
 
-              {/* Banner Image - Compact */}
+              {/* Banner Image - Upload Button */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                <h3 className="text-xs font-medium text-gray-700 mb-2">Banner Image URL *</h3>
+                <h3 className="text-xs font-medium text-gray-700 mb-2">Banner Image *</h3>
                 {formData.bannerImage ? (
                   <div className="relative">
                     <img
@@ -255,30 +294,70 @@ const EventForm = () => {
                       className="w-full h-32 object-cover rounded-lg"
                       onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = 'https://via.placeholder.com/800x200?text=Invalid+URL';
+                        e.target.src = 'https://via.placeholder.com/800x200?text=Invalid+Image';
                       }}
                     />
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, bannerImage: '' })}
-                      className="absolute top-2 right-2 p-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-lg"
-                    >
-                      <TrashIcon />
-                    </button>
+                    <div className="absolute bottom-2 right-2 flex gap-2">
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="hidden"
+                          disabled={uploading}
+                        />
+                        <div className="px-3 py-1.5 bg-white/90 backdrop-blur-sm text-gray-700 rounded-lg hover:bg-white transition-colors text-xs font-medium shadow-lg flex items-center gap-1.5">
+                          {uploading ? (
+                            <>
+                              <div className="w-3 h-3 border-2 border-[#D3000D] border-t-transparent rounded-full animate-spin"></div>
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <UploadIcon />
+                              Change
+                            </>
+                          )}
+                        </div>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, bannerImage: '' })}
+                        className="px-3 py-1.5 bg-red-600/90 backdrop-blur-sm text-white rounded-lg hover:bg-red-700 transition-colors text-xs font-medium shadow-lg flex items-center gap-1.5"
+                      >
+                        <TrashIcon />
+                        Remove
+                      </button>
+                    </div>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 border-2 border-dashed border-gray-200 rounded-lg p-2 bg-gray-50 focus-within:border-[#D3000D] transition-colors">
-                    <LinkIcon />
+                  <label className="cursor-pointer">
                     <input
-                      type="url"
-                      name="bannerImage"
-                      value={formData.bannerImage}
-                      onChange={handleChange}
-                      className="flex-1 bg-transparent border-none focus:outline-none text-sm text-gray-600 placeholder-gray-400 py-1"
-                      placeholder="https://example.com/image.jpg"
-                      required
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={uploading}
                     />
-                  </div>
+                    <div className={`border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#D3000D] transition-colors bg-gray-50 hover:bg-gray-100 ${
+                      uploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                    }`}>
+                      {uploading ? (
+                        <div className="flex flex-col items-center">
+                          <div className="w-8 h-8 border-4 border-[#D3000D] border-t-transparent rounded-full animate-spin mb-2"></div>
+                          <p className="text-sm text-gray-500">Uploading...</p>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex justify-center mb-2">
+                            <UploadIcon />
+                          </div>
+                          <p className="text-sm text-gray-600 font-medium">Click to upload banner image</p>
+                          <p className="text-xs text-gray-400 mt-1">PNG, JPG, WEBP up to 10MB</p>
+                        </>
+                      )}
+                    </div>
+                  </label>
                 )}
               </div>
             </div>

@@ -15,6 +15,7 @@ import OrderDetails from './pages/Orders/OrderDetails';
 import GalleryList from './pages/Gallery/GalleryList';
 import Profile from './pages/Profile';
 import Coupons from './pages/Coupons'; // Add this import
+import LeadsList from './pages/Leads/LeadsList'; // Add this import
 
 const AppLayout = ({ children }) => (
   <div className="flex h-screen overflow-hidden">
@@ -110,6 +111,14 @@ function App() {
           <ProtectedRoute>
             <AppLayout>
               <GalleryList />
+            </AppLayout>
+          </ProtectedRoute>
+        } />
+
+            <Route path="/leads" element={
+          <ProtectedRoute>
+            <AppLayout>
+              <LeadsList />
             </AppLayout>
           </ProtectedRoute>
         } />
