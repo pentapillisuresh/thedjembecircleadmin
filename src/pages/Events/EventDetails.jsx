@@ -4,6 +4,8 @@ import { getEvent } from '../../api/admin';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { toast } from 'react-toastify';
 
+const BASEURL = "https://service.thedjembecircle.com/";
+
 // Custom SVG Icons
 const ArrowLeftIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,12 +110,12 @@ const EventDetails = () => {
         {event.bannerImage && (
           <div className="rounded-2xl overflow-hidden mb-6 shadow-sm">
             <img
-              src={event.bannerImage}
+              src={`${BASEURL}${event.bannerImage}`}
               alt={event.title}
               className="w-full h-64 object-cover"
               onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = 'https://via.placeholder.com/1200x400?text=No+Image';
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/images/logo.jpeg';
               }}
             />
           </div>

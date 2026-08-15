@@ -4,6 +4,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import GalleryForm from './GalleryForm';
 import { toast } from 'react-toastify';
 
+const BASEURL = "https://service.thedjembecircle.com/";
 // Custom SVG Icons (no external imports)
 const PlusIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,7 +86,7 @@ const GalleryList = () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this item?')) return;
-    
+
     try {
       await deleteGalleryItem(id);
       toast.success('Gallery item deleted successfully');
@@ -180,7 +181,7 @@ const GalleryList = () => {
 
       {/* Gallery Form */}
       {showForm && (
-        <GalleryForm 
+        <GalleryForm
           onSuccess={handleFormSuccess}
           onCancel={handleFormCancel}
           editData={editingItem}
@@ -218,20 +219,20 @@ const GalleryList = () => {
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr 
-                  key={item.id} 
+                <tr
+                  key={item.id}
                   className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors duration-200 group"
                 >
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">
                       {item.mediaType === 'image' ? (
                         <img
-                          src={item.mediaUrl}
+                        src={`${BASEURL}${item.mediaUrl}`}
                           alt={item.caption || 'Gallery item'}
                           className="w-12 h-12 rounded-lg object-cover border border-gray-100"
                           onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = '/images/logo.jpeg';
                           }}
                         />
                       ) : (
@@ -255,11 +256,10 @@ const GalleryList = () => {
                     </p>
                   </td>
                   <td className="py-4 px-6">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      item.galleryType === 'event' 
-                        ? 'bg-blue-500/10 text-blue-700 border border-blue-500/20' 
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${item.galleryType === 'event'
+                        ? 'bg-blue-500/10 text-blue-700 border border-blue-500/20'
                         : 'bg-purple-500/10 text-purple-700 border border-purple-500/20'
-                    }`}>
+                      }`}>
                       {item.galleryType === 'event' ? 'Event' : 'General'}
                     </span>
                   </td>
@@ -274,11 +274,10 @@ const GalleryList = () => {
                     )}
                   </td>
                   <td className="py-4 px-6">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full border ${
-                      item.isActive 
-                        ? 'bg-green-500/10 text-green-700 border-green-500/20' 
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full border ${item.isActive
+                        ? 'bg-green-500/10 text-green-700 border-green-500/20'
                         : 'bg-gray-500/10 text-gray-700 border-gray-500/20'
-                    }`}>
+                      }`}>
                       {item.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
@@ -295,11 +294,10 @@ const GalleryList = () => {
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleToggle(item.id)}
-                        className={`p-2 rounded-lg transition-all duration-200 ${
-                          item.isActive 
-                            ? 'text-green-600 hover:bg-green-50' 
+                        className={`p-2 rounded-lg transition-all duration-200 ${item.isActive
+                            ? 'text-green-600 hover:bg-green-50'
                             : 'text-gray-400 hover:bg-gray-100'
-                        }`}
+                          }`}
                         title={item.isActive ? 'Deactivate' : 'Activate'}
                       >
                         {item.isActive ? <EyeIcon /> : <EyeOffIcon />}
