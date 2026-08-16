@@ -334,3 +334,25 @@ export const getPublishedBlogBySlug = async (slug) => {
     throw error;
   }
 };
+
+
+// ==================== BLOG IMAGE UPLOAD ====================
+
+export const uploadBlogImage = (file, onProgress) => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return axiosInstance.post('/upload/image', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    },
+    onUploadProgress: (progressEvent) => {
+      if (onProgress && progressEvent.total) {
+        const percentCompleted = Math.round(
+          (progressEvent.loaded * 100) / progressEvent.total
+        );
+        onProgress(percentCompleted);
+      }
+    }
+  });
+};

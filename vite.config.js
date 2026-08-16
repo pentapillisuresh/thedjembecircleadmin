@@ -7,12 +7,12 @@ export default defineConfig({
 server: {
   proxy: {
     '/api': {
-      target: 'https://service.thedjembecircle.com',
+      target: 'http://localhost:3001',
       changeOrigin: true,
     },
 
     '/uploads': {
-      target: 'https://service.thedjembecircle.com',
+      target: 'http://localhost:3001',
       changeOrigin: true,
     },
   },

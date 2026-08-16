@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getBlog, createBlog, updateBlog } from '../../api/admin';
+import {
+  getBlog,
+  createBlog,
+  updateBlog,
+  uploadBlogImage
+} from '../../api/admin';
 
 const BlogForm = () => {
   const { id } = useParams();
@@ -8,6 +13,8 @@ const BlogForm = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+const [uploadProgress, setUploadProgress] = useState(0);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -55,6 +62,73 @@ const BlogForm = () => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+
+
+  const handleImageUpload = async (e) => {
+  const file = e.target.files?.[0];
+
+  if (!file) return;
+
+  // Validate file type
+  const allowedTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp'
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    setError('Only JPG, PNG, GIF and WEBP images are allowed');
+    e.target.value = '';
+    return;
+  }
+
+  // Validate size - 10 MB
+  if (file.size > 10 * 1024 * 1024) {
+    setError('Image size must be less than 10 MB');
+    e.target.value = '';
+    return;
+  }
+
+  try {
+    setUploadingImage(true);
+    setUploadProgress(0);
+    setError(null);
+
+    const response = await uploadBlogImage(
+      file,
+      (progress) => {
+        setUploadProgress(progress);
+      }
+    );
+
+    const uploadedUrl = response.data?.data?.fileUrl;
+
+    if (!uploadedUrl) {
+      throw new Error('Image URL was not returned by server');
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      featuredImage: uploadedUrl
+    }));
+
+    setUploadProgress(100);
+
+  } catch (error) {
+    console.error('Failed to upload blog image:', error);
+
+    setError(
+      error.response?.data?.message ||
+      'Failed to upload featured image'
+    );
+  } finally {
+    setUploadingImage(false);
+  }
+
+  // Allow selecting the same file again
+  e.target.value = '';
+};
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -187,30 +261,111 @@ const BlogForm = () => {
         </div>
 
         {/* Featured Image */}
-        <div>
-          <label htmlFor="featuredImage" className="block text-sm font-medium text-gray-700 mb-1">
-            Featured Image URL
-          </label>
-          <input
-            type="url"
-            id="featuredImage"
-            name="featuredImage"
-            value={formData.featuredImage}
-            onChange={handleChange}
-            placeholder="https://example.com/image.jpg"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#D3000D] focus:border-transparent"
+       {/* Featured Image Upload */}
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    Featured Image
+  </label>
+
+  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#D3000D] transition-colors">
+
+    <input
+      type="file"
+      id="featuredImage"
+      accept="image/jpeg,image/png,image/gif,image/webp"
+      onChange={handleImageUpload}
+      disabled={uploadingImage}
+      className="hidden"
+    />
+
+    <label
+      htmlFor="featuredImage"
+      className={`cursor-pointer ${
+        uploadingImage ? 'cursor-not-allowed opacity-50' : ''
+      }`}
+    >
+      <div className="flex flex-col items-center">
+
+        <svg
+          className="w-10 h-10 text-gray-400 mb-3"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="1.5"
+            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-9h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
           />
-          {formData.featuredImage && (
-            <div className="mt-2">
-              <img 
-                src={formData.featuredImage} 
-                alt="Featured" 
-                className="h-32 object-cover rounded-md border border-gray-200"
-                onError={(e) => e.target.style.display = 'none'}
-              />
-            </div>
-          )}
+        </svg>
+
+        <p className="text-sm font-medium text-gray-700">
+          {uploadingImage
+            ? 'Uploading image...'
+            : 'Click to upload featured image'}
+        </p>
+
+        <p className="text-xs text-gray-500 mt-1">
+          JPG, PNG, GIF or WEBP • Maximum 10 MB
+        </p>
+
+      </div>
+    </label>
+
+    {/* Upload Progress */}
+    {uploadingImage && (
+      <div className="mt-4">
+        <div className="flex justify-between text-xs text-gray-500 mb-1">
+          <span>Uploading...</span>
+          <span>{uploadProgress}%</span>
         </div>
+
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div
+            className="bg-[#D3000D] h-2 rounded-full transition-all duration-300"
+            style={{ width: `${uploadProgress}%` }}
+          />
+        </div>
+      </div>
+    )}
+
+  </div>
+
+  {/* Uploaded Image Preview */}
+  {formData.featuredImage && !uploadingImage && (
+    <div className="mt-4 relative">
+      <p className="text-sm font-medium text-gray-700 mb-2">
+        Uploaded Image
+      </p>
+
+      <div className="relative w-full max-w-md">
+        <img
+          src={formData.featuredImage}
+          alt="Featured"
+          className="w-full h-48 object-cover rounded-lg border border-gray-200"
+          onError={(e) => {
+            e.target.style.display = 'none';
+          }}
+        />
+
+        <button
+          type="button"
+          onClick={() =>
+            setFormData(prev => ({
+              ...prev,
+              featuredImage: ''
+            }))
+          }
+          className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-700"
+          title="Remove image"
+        >
+          ×
+        </button>
+      </div>
+    </div>
+  )}
+</div>
 
         {/* Author */}
         <div>
