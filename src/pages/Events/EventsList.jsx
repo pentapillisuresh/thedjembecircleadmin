@@ -4,6 +4,7 @@ import { getEvents, deleteEvent } from '../../api/admin';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { toast } from 'react-toastify';
 
+const BASEURL = "https://service.thedjembecircle.com/";
 // Custom SVG Icons (no external imports)
 const PlusIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -193,10 +194,14 @@ const EventsList = () => {
                     <div className="flex items-center gap-3">
                       {event.bannerImage ? (
                         <img
-                          src={event.bannerImage}
+                        src={`${BASEURL}${event.bannerImage}`}
                           alt={event.title}
                           className="w-12 h-12 rounded-lg object-cover border border-gray-100"
-                        />
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = '/images/logo.jpeg';
+                          }}
+                        />          
                       ) : (
                         <div className="w-12 h-12 rounded-lg bg-[#D3000D]/5 flex items-center justify-center border border-gray-100">
                           <span className="text-lg font-light text-[#D3000D]">
