@@ -252,3 +252,85 @@ export const deleteLead = async (id) => {
     throw error;
   }
 };
+
+
+// ==================== BLOG MANAGEMENT ====================
+
+// Get all blogs (admin)
+export const getBlogs = async (params) => {
+  try {
+    const response = await axiosInstance.get('/admin/blog', { params });
+    return response.data?.data || { total: 0, blogs: [] };
+  } catch (error) {
+    console.error('Error fetching blogs:', error);
+    throw error;
+  }
+};
+
+// Get a single blog by ID (admin)
+export const getBlog = async (id) => {
+  try {
+    const response = await axiosInstance.get(`/admin/blog/${id}`);
+    return response.data?.data || null;
+  } catch (error) {
+    console.error('Error fetching blog:', error);
+    throw error;
+  }
+};
+
+// Create a new blog
+export const createBlog = async (data) => {
+  try {
+    const response = await axiosInstance.post('/admin/blog', data);
+    return response.data?.data || null;
+  } catch (error) {
+    console.error('Error creating blog:', error);
+    throw error;
+  }
+};
+
+// Update a blog
+export const updateBlog = async (id, data) => {
+  try {
+    const response = await axiosInstance.put(`/admin/blog/${id}`, data);
+    return response.data?.data || null;
+  } catch (error) {
+    console.error('Error updating blog:', error);
+    throw error;
+  }
+};
+
+// Delete a blog
+export const deleteBlog = async (id) => {
+  try {
+    const response = await axiosInstance.delete(`/admin/blog/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting blog:', error);
+    throw error;
+  }
+};
+
+// ==================== PUBLIC BLOG API ====================
+
+// Get published blogs (public)
+export const getPublishedBlogs = async (params) => {
+  try {
+    const response = await axiosInstance.get('/blog', { params });
+    return response.data?.data || { total: 0, blogs: [] };
+  } catch (error) {
+    console.error('Error fetching published blogs:', error);
+    throw error;
+  }
+};
+
+// Get a single published blog by slug (public)
+export const getPublishedBlogBySlug = async (slug) => {
+  try {
+    const response = await axiosInstance.get(`/blog/${slug}`);
+    return response.data?.data || null;
+  } catch (error) {
+    console.error('Error fetching blog:', error);
+    throw error;
+  }
+};

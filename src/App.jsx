@@ -14,8 +14,12 @@ import OrdersList from './pages/Orders/OrdersList';
 import OrderDetails from './pages/Orders/OrderDetails';
 import GalleryList from './pages/Gallery/GalleryList';
 import Profile from './pages/Profile';
-import Coupons from './pages/Coupons'; // Add this import
-import LeadsList from './pages/Leads/LeadsList'; // Add this import
+import Coupons from './pages/Coupons';
+import LeadsList from './pages/Leads/LeadsList';
+// Add blog imports
+import BlogList from './pages/Blog/BlogList';
+import BlogForm from './pages/Blog/BlogForm';
+import BlogDetails from './pages/Blog/BlogDetails';
 
 const AppLayout = ({ children }) => (
   <div className="flex h-screen overflow-hidden">
@@ -115,15 +119,47 @@ function App() {
           </ProtectedRoute>
         } />
 
-            <Route path="/leads" element={
+        <Route path="/leads" element={
           <ProtectedRoute>
             <AppLayout>
               <LeadsList />
             </AppLayout>
           </ProtectedRoute>
         } />
+
+        {/* Blog Routes */}
+        <Route path="/blog" element={
+          <ProtectedRoute>
+            <AppLayout>
+              <BlogList />
+            </AppLayout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/blog/new" element={
+          <ProtectedRoute>
+            <AppLayout>
+              <BlogForm />
+            </AppLayout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/blog/:id" element={
+          <ProtectedRoute>
+            <AppLayout>
+              <BlogDetails />
+            </AppLayout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/blog/:id/edit" element={
+          <ProtectedRoute>
+            <AppLayout>
+              <BlogForm />
+            </AppLayout>
+          </ProtectedRoute>
+        } />
         
-        {/* Add Coupons routes */}
         <Route path="/coupons" element={
           <ProtectedRoute>
             <AppLayout>
