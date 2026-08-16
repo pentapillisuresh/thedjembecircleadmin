@@ -4,7 +4,7 @@ import { getEvent } from '../../api/admin';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { toast } from 'react-toastify';
 
-const BASEURL = "https://service.thedjembecircle.com/";
+const BASEURL = "http://localhost:3001";
 
 // Custom SVG Icons
 const ArrowLeftIcon = () => (
