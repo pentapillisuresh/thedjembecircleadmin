@@ -4,7 +4,7 @@ import { getEvent } from '../../api/admin';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { toast } from 'react-toastify';
 
-const BASEURL = "http://localhost:3001";
+const BASEURL = "https://service.thedjembecircle.com";
 
 // Helper function to format date
 const formatDateInIST = (utcDate) => {

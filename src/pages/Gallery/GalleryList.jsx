@@ -4,7 +4,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import GalleryForm from './GalleryForm';
 import { toast } from 'react-toastify';
 
-const BASEURL = "http://localhost:3001";
+const BASEURL = "https://service.thedjembecircle.com";
 // Custom SVG Icons (no external imports)
 const PlusIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
