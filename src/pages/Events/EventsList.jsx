@@ -5,6 +5,15 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { toast } from 'react-toastify';
 
 const BASEURL = "http://localhost:3001";
+
+// Helper function to format date in IST
+const formatDateInIST = (utcDate) => {
+  if (!utcDate) return null;
+  const date = new Date(utcDate);
+  // Display as IST without manual offset - use browser's locale
+  return date;
+};
+
 // Custom SVG Icons (no external imports)
 const PlusIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,7 +194,9 @@ const EventsList = () => {
               </tr>
             </thead>
             <tbody>
-              {events.map((event) => (
+              {events.map((event) => {
+                const dateObj = formatDateInIST(event.date);
+                return (
                 <tr 
                   key={event.id} 
                   className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors duration-200 group"
@@ -194,7 +205,7 @@ const EventsList = () => {
                     <div className="flex items-center gap-3">
                       {event.bannerImage ? (
                         <img
-                        src={`${BASEURL}${event.bannerImage}`}
+                          src={`${BASEURL}${event.bannerImage}`}
                           alt={event.title}
                           className="w-12 h-12 rounded-lg object-cover border border-gray-100"
                           onError={(e) => {
@@ -220,17 +231,21 @@ const EventsList = () => {
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <CalendarIcon />
-                      <span>{new Date(event.date).toLocaleDateString('en-IN', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric'
-                      })}</span>
+                      <span>
+                        {dateObj ? dateObj.toLocaleDateString('en-IN', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                          timeZone: 'Asia/Kolkata'
+                        }) : 'Invalid Date'}
+                      </span>
                       <span className="text-gray-300">•</span>
                       <span className="text-xs text-gray-400">
-                        {new Date(event.date).toLocaleTimeString('en-IN', {
+                        {dateObj ? dateObj.toLocaleTimeString('en-IN', {
                           hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+                          minute: '2-digit',
+                          timeZone: 'Asia/Kolkata'
+                        }) : ''}
                       </span>
                     </div>
                   </td>
@@ -276,7 +291,7 @@ const EventsList = () => {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>

@@ -38,6 +38,21 @@ const EventForm = () => {
     ticketClasses: [],
   });
 
+  // Helper function to convert UTC to Local datetime-local input format
+  const convertUTCToLocalForInput = (utcDate) => {
+    if (!utcDate) return '';
+    // Create date from UTC string
+    const date = new Date(utcDate);
+    // Get local date components
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    // Format as YYYY-MM-DDTHH:mm (local time)
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   useEffect(() => {
     if (isEdit) {
       fetchEvent();
@@ -52,7 +67,8 @@ const EventForm = () => {
         setFormData({
           title: event.title || '',
           description: event.description || '',
-          date: event.date ? event.date.split('T')[0] : '',
+          // Convert UTC to local time for input field
+          date: convertUTCToLocalForInput(event.date),
           venue: event.venue || '',
           eventType: event.eventType || 'other',
           bannerImage: event.bannerImage || '',
@@ -108,7 +124,6 @@ const EventForm = () => {
     setUploading(true);
     try {
       const response = await uploadGalleryFile(file, (progress) => {
-        // You can show progress if needed
         console.log('Upload progress:', progress);
       });
 
@@ -137,8 +152,13 @@ const EventForm = () => {
 
     setLoading(true);
     try {
+      // Convert local datetime to UTC for storage
+      const localDate = new Date(formData.date);
+      const utcDate = localDate.toISOString();
+
       const payload = {
         ...formData,
+        date: utcDate,
         ticketClasses: formData.ticketClasses.map(cls => ({
           ...cls,
           price: parseFloat(cls.price) || 0,

@@ -6,6 +6,13 @@ import { toast } from 'react-toastify';
 
 const BASEURL = "http://localhost:3001";
 
+// Helper function to format date
+const formatDateInIST = (utcDate) => {
+  if (!utcDate) return null;
+  const date = new Date(utcDate);
+  return date;
+};
+
 // Custom SVG Icons
 const ArrowLeftIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,6 +92,8 @@ const EventDetails = () => {
   if (loading) return <LoadingSpinner />;
   if (!event) return <div className="p-6 text-center text-gray-500">Event not found</div>;
 
+  const dateObj = formatDateInIST(event.date);
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="max-w-6xl mx-auto">
@@ -149,17 +158,19 @@ const EventDetails = () => {
                   <div>
                     <p className="text-xs text-gray-400">Date & Time</p>
                     <p className="font-medium">
-                      {new Date(event.date).toLocaleDateString('en-IN', {
+                      {dateObj ? dateObj.toLocaleDateString('en-IN', {
                         day: '2-digit',
                         month: 'long',
-                        year: 'numeric'
-                      })}
+                        year: 'numeric',
+                        timeZone: 'Asia/Kolkata'
+                      }) : 'Invalid Date'}
                     </p>
                     <p className="text-xs text-gray-400">
-                      {new Date(event.date).toLocaleTimeString('en-IN', {
+                      {dateObj ? dateObj.toLocaleTimeString('en-IN', {
                         hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                        minute: '2-digit',
+                        timeZone: 'Asia/Kolkata'
+                      }) : ''}
                     </p>
                   </div>
                 </div>
